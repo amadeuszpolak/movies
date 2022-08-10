@@ -23,96 +23,84 @@ class Serie(Movie):
         self.serie_num = serie_num
 
     def __str__(self):
-        return ("%s S%02dE%02d" % (self.title, self.serie_num, self.episode_num))
-        #return f'{self.title} S{self.serie_num}E{self.episode_num}'
+        return f'{self.title} S{self.serie_num:02d}E{self.episode_num:02d}'
 
-    def get_episodes_number(self, list_of_movies):
+    def get_episodes_number(self, video_library):
         count = 0
-        for i in list_of_movies:
+        for i in video_library:
             if self.title == i.title:
                 count += 1
         return count
 
-def get_movies(list_of_movies):
-    only_movies = []
-    for i in list_of_movies:
-        if type(i) == Movie:
-            only_movies.append(i)
-    return sorted(only_movies, key=lambda movie: movie.title)
+def get_video(video_library, video_type):
+    videos = []
+    for i in video_library:
+        if type(i) == video_type:
+            videos.append(i)
+    return videos
 
-def get_series(list_of_movies):
-    only_series = []
-    for i in list_of_movies:
-        if type(i) == Serie:
-            only_series.append(i)
-    return sorted(only_series, key=lambda movie: movie.title)
+def get_movies(video_library):
+    return sorted(get_video(video_library, Movie), key=lambda movie: movie.title)
 
-def search(list_of_movies, title):
-    for i in list_of_movies:
+def get_series(video_library):
+    return sorted(get_video(video_library, Serie), key=lambda serie: serie.title)
+
+def search(video_library, title):
+    for i in video_library:
         if i.title == title:
-            print(i)
+            return i
 
 def generate_ten_times(func):
     def wrapper(*args, **kwargs):
         for _ in range(10):
             func(*args, **kwargs)
-        #return func(*args, **kwargs)
     return wrapper
 
 @generate_ten_times
-def generate_views(list_of_movies):
-    index=list_of_movies.index(random.choice(list_of_movies))
-    list_of_movies[index].played += random.choice(range(1, 101))
-    #print(list_of_movies[index].played)
-    return list_of_movies
+def generate_views(video_library):
+    index = random.randint(0,len(video_library)-1)
+    video_library[index].played += random.randint(1,100)
 
-#dodać parametr content_type
-def top_titles(title_num, content_type, list_of_movies):
+def top_titles(title_num, content_type, video_library):
     #zakładam, że człowieko-komputer wybierze zawsze opcję 1 lub 2 :]
     if content_type == 1:
-        list_of_movies = get_movies(list_of_movies)
+        video_library = get_movies(video_library)
     elif content_type == 2:
-        list_of_movies = get_series(list_of_movies)
-    top_titles = sorted(list_of_movies, key=lambda movie: movie.played, reverse=True)
+        video_library = get_series(video_library)
+    top_titles = sorted(video_library, key=lambda movie: movie.played, reverse=True)
     return top_titles[:title_num]
 
-def add_full_seasons(_title, _release_date, _genre, season_num, episode_amount, list_of_movies):
+def add_full_seasons(_title, _release_date, _genre, season_num, episode_amount, video_library):
     for i in range(episode_amount):
         serial = Serie(title=_title, release_date=_release_date, genre=_genre, serie_num=season_num, episode_num=i+1, played=0)
-        list_of_movies.append(serial)
+        video_library.append(serial)
         print(serial)
-    return list_of_movies
+    return video_library
 
 def create_movie_library(series, movies):
-    temp_movie_list = []
+    temp_library = []
     for _ in range(series):
         serie = Serie(title=fake.company(), release_date=fake.year(), genre=fake.first_name(), serie_num=random.choice(range(1,25)), episode_num=random.choice(range(1,25)), played=0)
-        temp_movie_list.append(serie)
+        temp_library.append(serie)
     for _ in range(movies):
         movie = Movie(title=fake.company(), release_date=fake.year(), genre=fake.first_name(), played=0)
-        temp_movie_list.append(movie)
-    return temp_movie_list
+        temp_library.append(movie)
+    return temp_library
 
 if __name__ == "__main__":
     print("Biblioteka filmów.")
-    #wypełnij bibliotekę treścią x filmów, y seriali
-    movie_list = create_movie_library(20,20)
-    #wygeneruj views
-    generate_views(movie_list)
-    #pokaż bibliotekę filmów i seriali
-    for i in movie_list:
+    library = create_movie_library(20,20)
+    generate_views(library)
+    for i in library:
         print(f'{i}, wyświetleń {i.played}')
-    #dodaj cały sezon
     print("")
-    movie_list = add_full_seasons("Pełny Sezon", "2022", "Criminal", 5, 15, movie_list)
-    #ile episodów danego serialu
+    library = add_full_seasons("Pełny Sezon", "2022", "Criminal", 5, 15, library)
     print("")
-    print(f'Ile episodów danego serialu: {movie_list[40].get_episodes_number(movie_list)}')
-    #pokaż najpopularniejsze seriale i filmy dzisiaj
+    print(f'Ile episodów danego serialu: {library[40].get_episodes_number(library)}')
     today = date.today()
     d = today.strftime("%d.%m.%Y")
     print("")
     print(f'Najpopularniejsze filmy i seriale dnia {d}:')
-    top = top_titles(5,2,movie_list)
+    top = top_titles(5,1,library)
     for i in top:
         print(f'{i}, wyświetleń {i.played}')
